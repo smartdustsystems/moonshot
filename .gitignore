@@ -1,2 +1,3 @@
 ingestion/dumps/*.csv
 ingestion/dumps/*.csv.zip
+ml/.ipynb_checkpoints/

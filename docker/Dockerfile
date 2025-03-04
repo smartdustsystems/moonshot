@@ -13,7 +13,8 @@ RUN pip install --no-cache-dir \
     numpy \
     tensorflow \
     matplotlib \
-    mord
+    mord \
+    xgboost
 
 # Download Spacy model
 RUN python -m spacy download en_core_web_sm
