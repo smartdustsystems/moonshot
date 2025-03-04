@@ -2,8 +2,8 @@ version: '3.8'
 
 services:
   ml-container:
-    image: tensorflow/tensorflow:latest-jupyter  # Uses a TensorFlow image with Jupyter pre-installed
     container_name: ml_environment
+    build: ./docker
     volumes:
       - .:/ml
       - .:/ingestion
