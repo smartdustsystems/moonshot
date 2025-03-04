@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  ml-container:
+    image: tensorflow/tensorflow:latest-jupyter  # Uses a TensorFlow image with Jupyter pre-installed
+    container_name: ml_environment
+    volumes:
+      - .:/ml
+      - .:/ingestion
+    working_dir: /ml
+    ports:
+      - "8888:8888"  # Exposes Jupyter Notebook
+    stdin_open: true
+    tty: true
+    command: ["jupyter", "notebook", "--ip=0.0.0.0", "--allow-root", "--NotebookApp.token=''"]
