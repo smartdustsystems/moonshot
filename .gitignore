@@ -1,0 +1,2 @@
+./ingestion/dumps/*.csv
+./ingestion/dumps/*.csv.zip
