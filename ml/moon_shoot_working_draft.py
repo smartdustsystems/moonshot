@@ -393,7 +393,35 @@ def best_polynomial_fit(label, feature):
 
 """### (Soumo) @Angel do we need mixed features at this point? Since we are trying out basic regression, lets treat all features as independent entities (sure they can be correlated). If we need to study mixed features, its better to go the shallow neural net route, and let it decide the optimal combination, rather than us brute forcing through various options
 
-####XGBoost model to get feature imporance (i.e. which feature combinations matter most)
+# (Soumo) Adding Query-Content feature code here
+"""
+
+"""
+Code for Query Content Correlation
+
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+
+vectorizer = TfidfVectorizer()
+tfidf_matrix_var = vectorizer.fit_transform(df["page_var"]) # Replace page_var with any page feature
+# can be h1, h2, content etc
+query_tfidf = vectorizer.transform(df["query"])
+
+similarity_var_scores = cosine_similarity(query_tfidf, tfidf_matrix_var)
+
+df["query_var_similarity"] = np.diag(similarity_var_scores)
+"""
+
+"""
+# model = SentenceTransformer('all-MiniLM-L6-v2')
+# query_embeddings = model.encode(df["query_text"])
+# page_embeddings = model.encode(df["page_content"])
+# df["bert_similarity"] = np.diag(cosine_similarity(query_embeddings, page_embeddings))
+"""
+
+"""####XGBoost model to get feature imporance (i.e. which feature combinations matter most)
+
+# (Soumo) @Angel, lets switch to LightGBM. Its faster and more memory efficient for larger datasets
 """
 
 from xgboost import XGBRegressor
@@ -850,5 +878,66 @@ plt.show()
 * Use HDSCan for the clustering
 * Use other models for the clasiffication XGBoostClassifier, RandomForestClassifier, LightGBM
 * Use OpenAI embeddings (ONCE WE HAVE REAL DATA)
-"""
 
+# (Soumo) Equivalent LightGBM Code
+
+train_data = lgb.Dataset(
+    train_df[features],
+    label=train_df["relevance_score"],
+    group=train_groups ### keeping this additional flag here, to group quries that are semantically similar
+)
+
+params = {
+    "objective": "lambdarank",
+    "metric": "ndcg",
+    "ndcg_eval_at": [10],
+    "verbosity": -1,
+    "num_leaves": 31,
+    "learning_rate": 0.05,
+    "min_data_in_leaf": 20
+}
+
+model = lgb.train(
+    params,
+    train_data,
+    num_boost_round=100,
+    valid_sets=[train_data],
+    callbacks=[lgb.log_evaluation(10)]
+)
+
+We can pull feature weights as well
+
+importance = model.feature_importance(importance_type="gain")
+feature_importance = pd.DataFrame({
+    "feature": features,
+    "importance": importance
+}).sort_values("importance", ascending=False)
+
+print("Feature Importance:\n", feature_importance)
+
+Prediction Phase - Top 10
+
+
+def predict_rank_for_new_page(new_page_data, query_id, top_k=10):
+    # Fetch existing pages for the query
+    existing_pages = df[df["query_id"] == query_id].copy()
+
+    new_page_df = pd.DataFrame([new_page_data])
+    candidates = pd.concat([existing_pages, new_page_df], ignore_index=True)
+
+    new_page_tfidf = tfidf.transform([new_page_data["page_content"]])
+    query_tfidf = tfidf.transform([new_page_data["query_text"]])
+    candidates.loc[candidates.index[-1], "tfidf_similarity"] = cosine_similarity(query_tfidf, new_page_tfidf)[0][0]
+
+    # Predict scores and rank for all candidates
+    candidates["predicted_score"] = model.predict(candidates[features])
+    candidates = candidates.sort_values("predicted_score", ascending=False).head(top_k)
+    candidates["predicted_rank"] = range(1, len(candidates) + 1)
+
+    # Check if the new page is in the top-10
+    new_page_rank = candidates[candidates["page_id"] == new_page_data["page_id"]]["predicted_rank"].values
+    if len(new_page_rank) == 0:
+        return "Irrelevant (outside top 10)"
+    else:
+        return f"Rank {new_page_rank[0]}"
+"""
