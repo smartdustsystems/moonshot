@@ -1,8 +1,5 @@
 
-
-### File: train.py
-
-from serp_model import SERPModel
+from models.serp_model import SERPModel
 
 def train_models(df):
     print("Training models...")

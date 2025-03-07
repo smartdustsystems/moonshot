@@ -4,3 +4,6 @@ ml/.ipynb_checkpoints/
 mc_scan.log
 zmap_results.txt
 .ipynb_checkpoints/
+ml/data/__pycache__/
+ml/models/__pycache__/
+ml/utils/__pycache__/

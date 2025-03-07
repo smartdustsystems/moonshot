@@ -1,7 +1,9 @@
 
-from data_loader import DataLoader
-from feature_engineer import FeatureEngineer
-from serp_model import SERPModel
+
+from data.data_loader import DataLoader
+from data.feature_engineering import FeatureEngineer
+from models.train import train_models
+from utils.visualization import plot_correlation_matrix
 
 if __name__ == "__main__":
     print("Loading data...")
@@ -16,9 +18,6 @@ if __name__ == "__main__":
     feature_engineer.extract_spacy_embeddings()
     df = feature_engineer.get_features()
 
-    print("Training models...")
-    serp_model = SERPModel(df)
-    lr_model = serp_model.train_linear_regression()
-    mlp_model = serp_model.train_mlp_classifier()
-
-    print("Training complete. Models ready!")
+    plot_correlation_matrix(df)
+    
+    lr_model, mlp_model = train_models(df)
