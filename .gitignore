@@ -7,3 +7,4 @@ zmap_results.txt
 ml/data/__pycache__/
 ml/models/__pycache__/
 ml/utils/__pycache__/
+ml/__pycache__

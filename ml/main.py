@@ -1,6 +1,6 @@
 
 
-from data.data_loader import DataLoader
+from ml.data.data_loader import DataLoader
 from data.feature_engineering import FeatureEngineer
 from models.train import train_models
 from utils.visualization import plot_correlation_matrix

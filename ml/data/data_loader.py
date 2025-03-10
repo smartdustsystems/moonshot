@@ -1,14 +1,54 @@
+
 import pandas as pd
 import numpy as np
 import spacy
 from bs4 import BeautifulSoup
 import requests
+import zipfile
+import os
+import dask.dataframe as dd
+import csv
 
 class DataLoader:
     def __init__(self, num_samples=20):
         self.num_samples = num_samples
         self.nlp = spacy.load("en_core_web_md")
         self.data = None
+
+    def read_gsc_data(self, file_path="/app/ingestion/dumps/gsc_202503041305.csv"):
+        """
+        Reads an unzipped CSV file using Dask for memory-efficient processing.
+        """
+        if not os.path.exists(file_path):
+            raise FileNotFoundError(f"File not found: {file_path}")
+        
+        df = dd.read_csv(file_path)  # Use Dask to read CSV in a lazy way
+        return df
+
+
+    def read_details_data(self, file_path="/app/ingestion/dumps/details_202503100434.csv"):
+        """
+        Reads an unzipped CSV file using Dask for memory-efficient processing, handling bad lines and encoding issues.
+        """
+        if not os.path.exists(file_path):
+            raise FileNotFoundError(f"File not found: {file_path}")
+
+        df = dd.read_csv(
+            file_path, 
+            sample=256000000,   # Increase sample size
+            sample_rows=100,    # Ensure Dask reads enough rows
+            on_bad_lines="skip",  # Ignore badly formatted lines
+            engine="python",   # Use Python engine to better handle errors
+            quoting=csv.QUOTE_NONE,  # Prevent issues with unexpected quotes
+            encoding="utf-8",  # Ensure proper encoding
+            dtype={"html_code": "object"},  # Explicitly set dtype to object (string)
+            na_values=[],  # Prevents Dask from treating empty strings as NaN
+            keep_default_na=False  # Ensures empty values are not converted to NaN
+
+        )
+
+        return df
+
     
     def generate_synthetic_data(self):
         np.random.seed(42)
