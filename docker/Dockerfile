@@ -16,7 +16,10 @@ RUN pip install --no-cache-dir \
     mord \
     xgboost \
     "dask[complete]" \
-    pyarrow==10.0.1
+    pyarrow==10.0.1 \
+    pymysql \
+    sqlalchemy
+
 
 # Download Spacy model
 RUN python -m spacy download en_core_web_sm

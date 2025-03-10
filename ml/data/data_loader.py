@@ -8,6 +8,8 @@ import zipfile
 import os
 import dask.dataframe as dd
 import csv
+from sqlalchemy import create_engine
+
 
 class DataLoader:
     def __init__(self, num_samples=20):
@@ -46,6 +48,8 @@ class DataLoader:
             keep_default_na=False  # Ensures empty values are not converted to NaN
 
         )
+
+        #df.columns = [col.strip('"') for col in df.columns]
 
         return df
 
@@ -108,3 +112,30 @@ class DataLoader:
 
     def get_data(self):
         return self.data
+
+    def read_mysql_dask(chunksize=100000):
+        """
+        Reads data from a MySQL database using Dask in a memory-efficient way.
+        
+        Parameters:
+            query (str): The SQL query to execute.
+            db_url (str): The MySQL database connection URL.
+            chunksize (int): Number of rows per partition (default: 100,000).
+        
+        Returns:
+            dask.dataframe.DataFrame: A Dask DataFrame with the queried data.
+        """
+        db_url = "mysql+pymysql://angel:@sdsinternaltoolsdb-do-user-15315259-0.g.db.ondigitalocean.com:25060/data"
+        engine = create_engine(db_url)
+
+        # Read MySQL data in chunks
+        df = dd.read_sql_table(
+            table_name='details',
+            uri=db_url,
+            con=engine,
+            index_col="id",  # Ensure there is an indexed column for partitioning
+            npartitions=10,  # Adjust for parallelism
+            limits=None,  # Auto-detect limits for partitioning
+        )
+
+        return df
